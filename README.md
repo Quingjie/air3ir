@@ -41,3 +41,14 @@ Il faut aussi l’ajouter dans permits, sinon Perdu ne compile pas.
 Notre switch ne gère plus tous les cas. Le compilateur affiche alors une erreur sur PenaliteCalculator, et le projet ne compile plus tant qu’on n’a pas ajouté case Perdu ....
 L’oubli est donc détecté tout de suite, pas en production. Avec un default, le nouveau cas serait passé dans le default sans que personne ne s’en rende compte.
 
+
+
+### Question C.1 : 
+**Citez deux raisons pour lesquelles cette interface paramétrée vaut le coup d’être créée dès le premier DAO du projet, plutôt que d’écrire directement une classe concrète.*
+
+**Raison 1 : un contrat commun, sans répétition.**
+Tous les DAO (LivreDAO, EmpruntDAO, et d’autres plus tard) ont les mêmes opérations de base, avec les mêmes noms. Le <T, ID> évite de réécrire une interface par entité.
+
+**Raison 2 : flexibilité et tests.**
+Le reste du code (les servlets) peut dépendre de l’interface et pas d’une classe précise. On peut changer l’implémentation (par exemple passer à une autre base) ou la remplacer par un faux DAO pour tester, sans modifier les servlets.
+
