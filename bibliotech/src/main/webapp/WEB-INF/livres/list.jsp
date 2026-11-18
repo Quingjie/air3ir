@@ -9,6 +9,8 @@
 <body>
     <h1>Catalogue des livres</h1>
 
+    <p><a href="${pageContext.request.contextPath}/livres/nouveau">Ajouter un livre</a></p>
+
     <table border="1" cellpadding="5">
         <thead>
             <tr>
@@ -31,6 +33,12 @@
                     </td>
                     <td>
                         <a href="${pageContext.request.contextPath}/livres/${livre.id()}">Détail</a>
+                        <a href="${pageContext.request.contextPath}/livres/${livre.id()}/edit">Modifier</a>
+                        <form method="post"
+                              action="${pageContext.request.contextPath}/livres/${livre.id()}/delete"
+                              style="display:inline">
+                            <button type="submit">Supprimer</button>
+                        </form>
                     </td>
                 </tr>
             </c:forEach>

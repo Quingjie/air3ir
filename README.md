@@ -44,6 +44,27 @@ L’oubli est donc détecté tout de suite, pas en production. Avec un default, 
 
 ____________________________________________
 
+### Question B.2 : 
+**Quelle est la différence concrète entre ${livre.titre} directement dans le HTML et <c:out value="${livre.titre}” /> ? Donnez des exemples précis de leur fonctionnement.*
+
+**Différence :**
+${livre.titre} directement dans le HTML insère la valeur telle quelle, sans rien protéger.
+<c:out> échappe les caractères spéciaux du HTML (< devient &lt;, > devient &gt;, & devient &amp;, " devient &quot;) avant de les écrire (c’est escapeXml="true", la valeur par défaut).
+
+**Exemples précis :**
+Si un titre vaut <b>Gras</b>, avec ${livre.titre} le navigateur affiche Gras en gras : il a interprété le HTML. Avec <c:out>, il affiche le texte <b>Gras</b> tel quel.
+Si un titre vaut <script>alert('XSS')</script>, avec ${livre.titre} le script s’exécute dans le navigateur de tous ceux qui voient la page (faille XSS). Avec <c:out>, il s’affiche comme du simple texte et ne s’exécute pas.
+Un titre comme Tom & Jerry est aussi mieux affiché avec <c:out> (&amp;), ce qui garde le HTML valide.
+
+### Question B.3 : 
+**Décrivez en 3 phrases le scénario qui arrive à votre utilisateur si vous oubliez le PRG et que vous faites un forward après l’INSERT d’un livre.*
+
+**1.** L’utilisateur remplit le formulaire et clique sur « Enregistrer » : la servlet insère le livre, puis fait un forward vers la liste, mais l’URL du navigateur reste celle du POST /livres.
+**2.** S’il appuie sur F5, le navigateur affiche un avertissement et, s’il confirme, renvoie le même POST avec les mêmes données.
+**3.** Le livre est alors inséré une deuxième fois : il y a un doublon en base, et l’utilisateur ne s’en rend peut-être même pas compte.
+
+____________________________________________
+
 ### Question C.1 : 
 **Citez deux raisons pour lesquelles cette interface paramétrée vaut le coup d’être créée dès le premier DAO du projet, plutôt que d’écrire directement une classe concrète.*
 
