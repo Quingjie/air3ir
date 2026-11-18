@@ -27,3 +27,17 @@ Une interface classique peut être implémentée par n’importe quelle classe, 
 
 **Bénéfice pour le compilateur et le dev dans un switch :**
 Le compilateur connaît tous les cas possibles. Il peut donc vérifier que le switch les couvre tous (exhaustivité), sans default. Pour le dev, c’est plus sûr : si on oublie un cas, ça ne compile pas, au lieu de découvrir le bug à l’exécution.
+
+
+### Question A.3 : 
+**Pourquoi le compilateur garantit-il l’exhaustivité de votre switch sans avoir besoin du default ? Que se passerait-il si demain on ajoutait record Perdu(LocalDate dateConstat) implements StatutEmprunt {} à l’interface ?**
+
+**Pourquoi pas besoin de default :**
+L’interface est sealed : le mot permits donne la liste complète et fermée des cas possibles (EnCours, Rendu, EnRetard).
+Le compilateur vérifie que le switch couvre chacun de ces cas. Si tous sont traités, aucun autre cas ne peut exister, donc le default ne servirait à rien.
+
+**Si on ajoute Perdu :**
+Il faut aussi l’ajouter dans permits, sinon Perdu ne compile pas.
+Notre switch ne gère plus tous les cas. Le compilateur affiche alors une erreur sur PenaliteCalculator, et le projet ne compile plus tant qu’on n’a pas ajouté case Perdu ....
+L’oubli est donc détecté tout de suite, pas en production. Avec un default, le nouveau cas serait passé dans le default sans que personne ne s’en rende compte.
+
