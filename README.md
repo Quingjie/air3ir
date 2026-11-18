@@ -17,6 +17,7 @@ Le code est visible par tous ceux qui ont accès au dépôt, et l'historique Git
 1. Un fichier de configuration (`db.properties`) placé hors du dépôt ou listé dans `.gitignore`.
 2. Une DataSource JNDI configurée dans Tomcat (`context.xml`), où les identifiants sont gérés par le serveur et non par l'application.
 
+____________________________________________
 
 ### Question A.2 : 
 **Quelle différence entre une sealed interface et une interface classique ? Quel bénéfice pour le compilateur (et pour vous, le dev) lorsque vous écrivez un switch sur cette interface ?**
@@ -41,7 +42,7 @@ Il faut aussi l’ajouter dans permits, sinon Perdu ne compile pas.
 Notre switch ne gère plus tous les cas. Le compilateur affiche alors une erreur sur PenaliteCalculator, et le projet ne compile plus tant qu’on n’a pas ajouté case Perdu ....
 L’oubli est donc détecté tout de suite, pas en production. Avec un default, le nouveau cas serait passé dans le default sans que personne ne s’en rende compte.
 
-
+____________________________________________
 
 ### Question C.1 : 
 **Citez deux raisons pour lesquelles cette interface paramétrée vaut le coup d’être créée dès le premier DAO du projet, plutôt que d’écrire directement une classe concrète.*
@@ -51,4 +52,16 @@ Tous les DAO (LivreDAO, EmpruntDAO, et d’autres plus tard) ont les mêmes opé
 
 **Raison 2 : flexibilité et tests.**
 Le reste du code (les servlets) peut dépendre de l’interface et pas d’une classe précise. On peut changer l’implémentation (par exemple passer à une autre base) ou la remplacer par un faux DAO pour tester, sans modifier les servlets.
+
+
+### Question C.2 : 
+**CPourquoi PreparedStatement est-il systématiquement préféré à Statement ? Donnez les deux avantages principaux..*
+
+**Avantage 1 : la sécurité (injection SQL)**
+Avec un PreparedStatement, les valeurs sont envoyées séparément du texte SQL. Une valeur comme '; DROP TABLE livre; -- est traitée comme du simple texte, jamais comme du SQL.
+Avec un Statement et une concaténation, l’utilisateur peut modifier la requête.
+
+**Avantage 2 : la performance et le confort.**
+La requête est préparée une fois par la base, puis peut être réutilisée avec d’autres valeurs.
+On n’a pas à gérer soi-même les apostrophes, les dates ou les conversions de types : setString, setInt, setDate s’en chargent.
 
