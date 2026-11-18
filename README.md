@@ -16,3 +16,14 @@ Le code est visible par tous ceux qui ont accès au dépôt, et l'historique Git
 **Deux moyens de les externaliser (hors variables d'environnement :**
 1. Un fichier de configuration (`db.properties`) placé hors du dépôt ou listé dans `.gitignore`.
 2. Une DataSource JNDI configurée dans Tomcat (`context.xml`), où les identifiants sont gérés par le serveur et non par l'application.
+
+
+### Question A.2 : 
+**Quelle différence entre une sealed interface et une interface classique ? Quel bénéfice pour le compilateur (et pour vous, le dev) lorsque vous écrivez un switch sur cette interface ?**
+
+**Différence avec une interface classique :**
+
+Une interface classique peut être implémentée par n’importe quelle classe, n’importe où, à tout moment. Une sealed interface fixe la liste fermée de ses implémentations avec permits : aucune autre classe ne peut l’implémenter.
+
+**Bénéfice pour le compilateur et le dev dans un switch :**
+Le compilateur connaît tous les cas possibles. Il peut donc vérifier que le switch les couvre tous (exhaustivité), sans default. Pour le dev, c’est plus sûr : si on oublie un cas, ça ne compile pas, au lieu de découvrir le bug à l’exécution.
