@@ -56,6 +56,24 @@ public class LivreDAO implements GenericDAO<Livre, Long> {
         }
     }
 
+    // Livres dont le titre contient le texte recherché (sans tenir compte des majuscules)
+    public List<Livre> findByTitre(String recherche) {
+        String sql = "SELECT * FROM livre WHERE titre ILIKE ? ORDER BY id";
+        List<Livre> livres = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "%" + recherche + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    livres.add(construireLivre(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByTitre", e);
+        }
+        return livres;
+    }
+
     @Override
     public void save(Livre livre) {
         String sql = "INSERT INTO livre (titre, auteur, annee_publication, "

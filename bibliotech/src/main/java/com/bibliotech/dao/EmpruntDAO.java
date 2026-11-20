@@ -14,6 +14,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EmpruntDAO implements GenericDAO<Emprunt, Long> {
 
@@ -106,7 +108,40 @@ public class EmpruntDAO implements GenericDAO<Emprunt, Long> {
         return emprunts;
     }
 
-        // Emprunter un livre : 3 étapes dans UNE seule transaction
+    // Emprunts non rendus (en cours ou en retard)
+    public List<Emprunt> findEnCours() {
+        String sql = "SELECT * FROM emprunt WHERE date_retour_effective IS NULL "
+                + "ORDER BY date_retour_prevue";
+        List<Emprunt> emprunts = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                emprunts.add(construireEmprunt(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findEnCours", e);
+        }
+        return emprunts;
+    }
+
+    // Noms des étudiants, rangés par id (pour l'affichage)
+    public Map<Long, String> findNomsEtudiants() {
+        String sql = "SELECT id, prenom, nom FROM etudiant";
+        Map<Long, String> noms = new HashMap<>();
+        try (Connection conn = DatabaseConnection.get();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                noms.put(rs.getLong("id"), rs.getString("prenom") + " " + rs.getString("nom"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findNomsEtudiants", e);
+        }
+        return noms;
+    }
+
+        // Emprunter un livre : 3 étapes dans une seule transaction
     public void enregistrerEmprunt(long livreId, long etudiantId, int dureeJours) {
         try (Connection conn = DatabaseConnection.get()) {
             conn.setAutoCommit(false); // on démarre la transaction
@@ -114,8 +149,7 @@ public class EmpruntDAO implements GenericDAO<Emprunt, Long> {
                 // 1. Vérifier que le livre existe et qu'il reste un exemplaire
                 int disponibles;
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "SELECT exemplaires_disponibles FROM livre WHERE id = ?")) {
-                    ps.setLong(1, livreId);
+                        "SELECT exemplaires_disponibles FROM livre WHERE id = ? FOR UPDATE")) {                    ps.setLong(1, livreId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
                             throw new LivreIndisponibleException("Livre introuvable : " + livreId);
@@ -153,6 +187,43 @@ public class EmpruntDAO implements GenericDAO<Emprunt, Long> {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Erreur enregistrerEmprunt", e);
+        }
+    }
+
+        // Rendre un livre : date de retour + stock +1, dans UNE transaction
+    public void retournerEmprunt(long empruntId) {
+        try (Connection conn = DatabaseConnection.get()) {
+            conn.setAutoCommit(false);
+            try {
+                long livreId;
+                // 1. Marquer l'emprunt comme rendu (seulement s'il n'est pas déjà rendu)
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE emprunt SET date_retour_effective = ?, statut = 'RENDU' "
+                        + "WHERE id = ? AND date_retour_effective IS NULL RETURNING livre_id")) {
+                    ps.setDate(1, Date.valueOf(LocalDate.now()));
+                    ps.setLong(2, empruntId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Emprunt introuvable ou déjà rendu");
+                        }
+                        livreId = rs.getLong("livre_id");
+                    }
+                }
+
+                // 2. Remettre un exemplaire en stock
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE livre SET exemplaires_disponibles = exemplaires_disponibles + 1 WHERE id = ?")) {
+                    ps.setLong(1, livreId);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur retournerEmprunt", e);
         }
     }
 

@@ -27,7 +27,13 @@ public class LivreServlet extends HttpServlet {
 
         if (path == null || path.equals("/")) {
             // GET /livres : la liste
-            List<Livre> livres = livreDAO.findAll();
+            String q = request.getParameter("q");
+            List<Livre> livres;
+            if (q == null || q.isBlank()) {
+                livres = livreDAO.findAll();
+            } else {
+                livres = livreDAO.findByTitre(q.trim());
+            }
             request.setAttribute("livres", livres);
             request.getRequestDispatcher("/WEB-INF/livres/list.jsp")
                    .forward(request, response);
